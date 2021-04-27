@@ -127,3 +127,4 @@ marquesbrownlee_video_stats <- tuber::get_all_channel_video_stats(channel_id = "
 # To search for videos with a phrase e.g aws:
 aws_yt_videos <- yt_search("aws")
 
+# find channels from which videos of playlist are from:
