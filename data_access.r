@@ -2,8 +2,10 @@
 
 # Setting the environment
 # Explain the tuber package in depth
+library(dplyr)
 library(tuber)
 library(magrittr)
+library(tidyverse)
 
 
 # From API setting and authorising te OAurtho cliennt and obtained the credentials 
@@ -107,6 +109,15 @@ for (i in seq_along(vid_details)) {
 
 vid_details = do.call(rbind, vid_details)
 
+# To search for videos with a phrase e.g aws:
+aws_yt_videos <- yt_search("aws")
+
+# find channels from which videos of playlist are from:
+# Mixed Playlist url: https://www.youtube.com/watch?v=mC-zw0zCCtg&list=PLIVbZhwLbExKoDlYntZV_Y1c3bZYz7hAs
+
+
+
+
 # Channels
 # _____________________________________________________________________
 # Lets check out Marques Brownlee YouTube Channel:
@@ -114,7 +125,9 @@ vid_details = do.call(rbind, vid_details)
 
 # Get Channel Id in R: UCBJycsmduvYEL83R_U4JriQ
 marquesbrownlee_channel_stats <- get_channel_stats(channel_id = "UCBJycsmduvYEL83R_U4JriQ")
-marquesbrownlee_channel_stats = do.call(rbind.data.frame, marquesbrownlee_channel_stats)
+
+# The Element sin the List:
+marquesbrownlee_channel_stats[[1]]
 
 # Get all the videos from the channel:
 videos = yt_search(term="", type="video", channel_id = "UCBJycsmduvYEL83R_U4JriQ")
@@ -124,8 +137,48 @@ videos = videos %>%
 
 marquesbrownlee_video_stats <- tuber::get_all_channel_video_stats(channel_id = "UCBJycsmduvYEL83R_U4JriQ")
 
-# To search for videos with a phrase e.g aws:
-aws_yt_videos <- yt_search("aws")
+# Other Columns
+# subscriberCount
+marquesbrownlee_video_stats <- marquesbrownlee_video_stats %>% 
+  add_column(subscriberCount = marquesbrownlee_channel_stats[["statistics"]][[2]],
+             channelVideoCount = marquesbrownlee_channel_stats[["statistics"]][[4]],
+             channelViewCount = marquesbrownlee_channel_stats[["statistics"]][[1]],
+             PublishedYear = format(
+               as.POSIXct(as.Date(marquesbrownlee_video_stats$publication_date), format = "%m/%d/%Y %H:%M:%S"),
+               format="%Y"),
+             ChannelAge = format(
+               as.POSIXct(as.Date(marquesbrownlee_channel_stats[["snippet"]][[4]]), format = "%m/%d/%Y %H:%M:%S"),
+               format="%Y")
+             )
 
-# find channels from which videos of playlist are from:
-# Mixed Playlist url: https://www.youtube.com/watch?v=mC-zw0zCCtg&list=PLIVbZhwLbExKoDlYntZV_Y1c3bZYz7hAs
+#sort from most recent to least recent
+
+
+marquesbrownlee_video_stats <- marquesbrownlee_video_stats %>%
+  add_column(
+    PublishedDate = format(
+      as.POSIXct(as.Date(marquesbrownlee_video_stats$publication_date), format = "%m/%d/%Y %H:%M:%S"),
+      format="%m/%d/%Y")
+  )
+# Eliminate entry of the published date:Column.
+marquesbrownlee_video_stats <- marquesbrownlee_video_stats[rev(order(as.Date(marquesbrownlee_video_stats$PublishedYear.1, format="%m/%d/%Y"))),]
+
+# Previous data columns.
+marquesbrownlee_video_stats <- marquesbrownlee_video_stats %>%
+  add_column(
+    PrevCommentCount = lead(marquesbrownlee_video_stats$commentCount),
+    PrevDislikeCount = lead(marquesbrownlee_video_stats$dislikeCount),
+    PrevLikeCount = lead(marquesbrownlee_video_stats$likeCount),
+    PrevPublishedAt = lead(marquesbrownlee_video_stats$publication_date),
+    PrevViewCount = lead(marquesbrownlee_video_stats$viewCount),
+    PrevTitle = lead(marquesbrownlee_video_stats$title),
+  )
+
+# Do the same for Oliur / UltraLinx and Dave2D
+# https://www.youtube.com/channel/UCzJjUHizQfPYywqt1mSEMww https://www.youtube.com/channel/UCVYamHliCI9rw1tHR1xbkfw
+
+# Merge the three data sets to have the data we will use to predicts the number of views
+merge(marquesbrownlee_video_stats, UltraLinx_video_stats, dave2D, all = TRUE)
+
+
+# Data Exploration:
