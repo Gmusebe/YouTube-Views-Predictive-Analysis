@@ -3,10 +3,13 @@
 # Setting the environment
 # Explain the tuber package in depth
 library(dplyr)
+library(ggplot2)
+library(ggthemes)
 library(tuber)
+library(naniar)
 library(magrittr)
 library(tidyverse)
-
+library(heatmaply)
 
 # From API setting and authorising te OAurtho cliennt and obtained the credentials 
 # register the credentials. Read the API and OAurtho instriction to have an in depth knowlwdge of the same.
@@ -178,7 +181,185 @@ marquesbrownlee_video_stats <- marquesbrownlee_video_stats %>%
 # https://www.youtube.com/channel/UCzJjUHizQfPYywqt1mSEMww https://www.youtube.com/channel/UCVYamHliCI9rw1tHR1xbkfw
 
 # Merge the three data sets to have the data we will use to predicts the number of views
-merge(marquesbrownlee_video_stats, UltraLinx_video_stats, dave2D, all = TRUE)
+tech_merged_channels <- merge(marquesbrownlee_video_stats, UltraLinx_video_stats, dave2D, all = TRUE)
+# tech_merged_channels <- read.csv("merged_video_stats.csv", header = TRUE, na.strings = "")
+library(readxl)
+tech_merged_channels <- read_excel("merged_video_stats.xlsx")
 
+# Data Structure:
+str(tech_merged_channels)
+
+# Data summary
+summary(tech_merged_channels)
+
+# Change the date to date:
+tech_merged_channels$PublishedDate <- as.Date(tech_merged_channels$PublishedDate)
+
+# Numerical data:
+i <- c(7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 19, 20, 21, 23)
+tech_merged_channels[, i] <- apply(tech_merged_channels[ , i], 2,   
+                                   function(x) as.numeric(as.character(x)))
+
+# Factor:
+tech_merged_channels$channel_title <- as.factor(tech_merged_channels$channel_title)
+
+# Check for any missing values:
+# From summary there were a number missing values.
+# To visualise this:
+
+gg_miss_var(tech_merged_channels)
+# First, we perfom some descriptive statistics (how many missing? how many variables,
+# individuals with missing?) and try to inspect and vizualize the pattern of missing
+# entries and get hints on the mechanism. For this purpose, we use the R package VIM
+# (Visualization and Imputation of Missing Values - Mathias Templ) as well as Multiple
+# Correspondence Analysis (FactoMineR package). You should install the package VIM, then you can check the documentation by executing
+
+# Heatmap
+vis_miss(tech_merged_channels)
+
+# 0.7%
+# This plot provides a specific visualiation of the amount of missing data, showing
+# in black the location of missing values, and also providing information on the
+# overall percentage of missing values overall (in the legend), and in each variable.
+
+# An upset plot from the UpSetR package can be used to visualise the patterns of 
+# missingness, or rather the combinations of missingness across cases.
+# To see combinations of missingness and intersections of missingness amongst variables
+
+gg_miss_upset(tech_merged_channels)
+
+# This tells us that PublishedYear PublishedDate, PrevTitle PrevViewCount, PrevDislikeCount have missing values
+# PrevDislikeCount has most missing values
+# For the joined dots mean for instance there are 32 cases where the variables are missing together.
+
+# Number of columns with missing values.
+n_var_miss(tech_merged_channels)
+
+# Number of rows with missing values
+sum(apply(tech_merged_channels, 1, anyNA))
+
+#77 entries in the data have missing values.
+
+#Count of missing values per column:
+data.frame(sapply(tech_merged_channels, function(y) sum(length(which(is.na(y))))))
+
+
+gg_miss_upset(tech_merged_channels, nsets = n_var_miss(tech_merged_channels))
+
+# ________________________________________
+# The year with missing data
+gg_miss_fct(x = tech_merged_channels, fct = PublishedYear) + labs(title = "Year NA in YouTube Data")
+
+# Missing data by channel:
+gg_miss_fct(x = tech_merged_channels, fct = channel_title) + labs(title = "Channel NA in YouTube Data ")
+
+# We see a correlation between number of data with missing values:
+# Marques has most videos in the data and also has a number of missing data.
+# The numerous missing values are attributed to: Replication of like, dislike, Comment to the respective previews.
+# The data being a 0.3 percent of the data and whilst we remover the missing entries marques data reduces but still enough
+# To compare with  other channels.
+# Drop the columns with missing values.
+
+tech_merged_channels <- tech_merged_channels[complete.cases(tech_merged_channels), ]
+# You can confirm this by running the line 249
 
 # Data Exploration:
+# View the distribution of views:
+tech_merged_channels %>%
+  ggplot( aes(x=viewCount)) +
+  geom_histogram(bin = 50, fill="#0c4c8a", color="#e9ecef", alpha=0.9) +
+  ggtitle("Bin size = 3") +
+  theme_minimal() +
+  labs(title = "YouTube View",
+       subtitle = "YouTube Views from The marquesbrownlee, Dave2d, UltraLinx",
+       x = "View Count",
+       y = " ",
+       caption = "YouTube") +
+  xlim(0,10000000) +
+  ylim(0,300)
+
+# Looking closely the data has outliers. That is some videos had very high Views. This
+# Happens from time to time.
+# Let's check the summary of view counts:
+summary(tech_merged_channels$viewCount)
+
+
+# To see this clearly we shall have a boxplot:
+tech_merged_channels %>%
+  ggplot(tech_merged_channels, aes(x=viewCount, y = channel_title)) + geom_boxplot() +
+  theme_calc()+ scale_colour_calc() +
+  ggtitle("YouTube Data") +
+  labs(title = "YouTube View Outliers",
+       subtitle = "YouTube Views from The marquesbrownlee, Dave2d, UltraLinx",
+       x = "View Count",
+       y = "Channel",
+       caption = " ©YouTube")
+
+# Oultiers in the data:
+# The Outlier Values:
+Outliers <- boxplot.stats(tech_merged_channels$viewCount)$out
+Outliers_data <- tech_merged_channels[which(tech_merged_channels$viewCount %in% c(Outliers)),]
+
+# 134 outliers.
+# 130 belong to Marques Brownlee and 4 to Dave2d. This clearly shows how 	Marques Brownlee is good at his content
+# And has a wider scope of viewers.
+
+#Plotting the data with and without the Outliers comparing them with like counts
+par(mfrow=c(1, 2))
+plot(tech_merged_channels$viewCount, tech_merged_channels$likeCount,
+     main="With Outliers",
+     xlab = "View Count",
+     ylab = "Like Count",
+     pch="*",
+     col="red", cex=2)
+abline(lm(likeCount ~ viewCount, data=tech_merged_channels), col="blue", lwd=3, lty=2)
+
+# Without
+Without_Outliers_data <- tech_merged_channels[-which(tech_merged_channels$viewCount %in% c(Outliers)),]
+plot(Without_Outliers_data$viewCount, Without_Outliers_data$likeCount,
+     main="Without Outliers",
+     xlab = "View Count",
+     ylab = "Like Count",
+     pch="*",
+     col="red", cex=2)
+abline(lm(likeCount ~ viewCount, data=Without_Outliers_data), col="blue", lwd=3, lty=2)
+
+# So, why identifying the extreme values is important? Because, it can drastically 
+# bias/change the fit estimates and predictions. Let me illustrate this using the cars dataset.
+# Since we are working with real data extracted it will be a mistake to delete the ouliers knows
+# they represent true view from the specific videos.
+# We will need the data for real results. 
+ViewChange <- data.frame( Change = apply(tech_merged_channels[,c("viewCount", 'PrevViewCount')], 1,
+                                         function(x) { (x[1]-x[2])/x[2] * 100 } ))
+
+ViewChange %>%
+  ggplot( aes(x=Change)) +
+  geom_histogram(bins = 50, fill="#0c4c8a", color="#e9ecef", alpha=0.9) +
+  ggtitle("Bin size = 3") +
+  theme_minimal() +
+  labs(title = "Percentage Difference in Views Distribution Plot",
+       x = "Percentage Diifference",
+       y = " ",
+       caption = "©YouTube") +
+  xlim(-100,400)
+
+# The view counts by day:
+tech_merged_channels %>%
+  ggplot(aes(x=PublishedDate,y=viewCount)) +
+  geom_line(color="steelblue", size = 0.5) +
+  scale_color_manual(values = c("#00AFBB", "#E7B800","#FF0000")) +
+  labs(title = "YouTube Videos Posted Trend from 2008 - 2021",
+       caption = " Source: YouTube") +
+  xlab("Date") + ylab("View Count") +
+  theme_minimal()
+
+# There has been an increase in views with the age of the account.
+# For individual accounts:
+tech_merged_channels %>% ggplot(aes(x = PublishedDate , y = viewCount, color = channel_title)) +
+  geom_line() +
+  scale_color_manual(values = c("#00AFBB", "#E7B800","#FF0000")) +
+  labs(title = "YouTube Videos Posted Trend from 2008 - 2021",
+       subtitle = "Trends by Channels",
+       caption = " Source: YouTube") +
+  xlab("Date") + ylab("View Count") +
+  theme_minimal()
