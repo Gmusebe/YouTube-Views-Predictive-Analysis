@@ -10,7 +10,6 @@ library(magrittr)
 library(ggthemes)
 library(tidyverse)
 library(heatmaply)
-library(tidyverse)
 
 
 # After obtainin tokens, save them into two objects(client_id and client_secret).
