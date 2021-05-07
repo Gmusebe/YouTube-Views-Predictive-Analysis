@@ -156,19 +156,21 @@ tech_merged_channels %>%
        subtitle = "YouTube Views from The marquesbrownlee, Dave2d, UltraLinx",
        x = "View Count",
        y = " ",
-       caption = "YouTube") +
-  xlim(0,10000000) +
-  ylim(0,300)
-
-# Looking closely the data has outliers. That is some videos had very high Views. This
-# Happens from time to time.
-# Let's check the summary of view counts:
-summary(tech_merged_channels$viewCount)
-
+       caption = "YouTube")
 
 # To see this clearly we shall have a boxplot:
 tech_merged_channels %>%
-  ggplot(tech_merged_channels, aes(x=viewCount, y = channel_title)) + geom_boxplot() +
+  ggplot(aes(x="", y = viewCount)) +
+  geom_boxplot(notch=TRUE,outlier.colour="red") + coord_flip()
+  theme_minimal() +
+  ggtitle("YouTube Data") +
+  labs(title = "YouTube View Outliers",
+       subtitle = "YouTube Views from The marquesbrownlee, Dave2d, UltraLinx",
+       x = "",
+       y = "View Count",
+       caption = " ©YouTube")
+
+  ggplot(aes(x=viewCount, y = channel_title)) + geom_boxplot() +
   theme_calc()+ scale_colour_calc() +
   ggtitle("YouTube Data") +
   labs(title = "YouTube View Outliers",
