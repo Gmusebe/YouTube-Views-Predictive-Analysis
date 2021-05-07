@@ -9,6 +9,7 @@ library(ggplot2)
 library(magrittr)
 library(ggthemes)
 library(tidyverse)
+library(PerformanceAnalytics)
 
 # After obtaining tokens, save them into two objects(client_id and client_secret).
 
@@ -204,11 +205,12 @@ plot(Without_Outliers_data$viewCount, Without_Outliers_data$likeCount,
      col="red", cex=2)
 abline(lm(likeCount ~ viewCount, data=Without_Outliers_data), col="blue", lwd=3, lty=2)
 
-# Correlation:
-library(PerformanceAnalytics)
-data <- Without_Outliers_data[,c("viewCount","likeCount","dislikeCount","favoriteCount",
+# Correlation of numerical data:
+# _____________________________
+data <- Without_Outliers_data[,c("viewCount","likeCount","dislikeCount",
                          "commentCount", "subscriberCount", "channelVideoCount",
                          "channelViewCount")]
+# Correlation:
 PerformanceAnalytics::chart.Correlation(data, pch=19)
 
 
