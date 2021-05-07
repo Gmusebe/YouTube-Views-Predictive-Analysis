@@ -140,6 +140,11 @@ gg_miss_fct(x = tech_merged_channels, fct = channel_title) +
 tech_merged_channels <- tech_merged_channels[complete.cases(tech_merged_channels), ]
 # You can confirm this by running the line 249
 
+# Visualization:
+# Significant Outliers in Views:
+library(ggpubr)
+library(rstatix)
+
 # Data Exploration:
 # View the distribution of views:
 tech_merged_channels %>%
