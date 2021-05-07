@@ -158,19 +158,16 @@ tech_merged_channels %>%
        y = " ",
        caption = "YouTube")
 
-# To see this clearly we shall have a boxplot:
+# To see outliers clearly we shall have a boxplot:
 tech_merged_channels %>%
   ggplot(aes(x="", y = viewCount)) +
-  geom_boxplot(notch=TRUE,outlier.colour="red") + coord_flip()
-  theme_minimal() +
-  ggtitle("YouTube Data") +
-  labs(title = "YouTube View Outliers",
-       subtitle = "YouTube Views from The marquesbrownlee, Dave2d, UltraLinx",
-       x = "",
-       y = "View Count",
-       caption = " ©YouTube")
+  geom_boxplot(outlier.colour="red")
+  theme_minimal()
 
-  ggplot(aes(x=viewCount, y = channel_title)) + geom_boxplot() +
+# By Channel title:  
+tech_merged_channels %>%
+  ggplot(aes(x=viewCount, y = channel_title)) +
+  geom_boxplot(outlier.colour="red") +
   theme_calc()+ scale_colour_calc() +
   ggtitle("YouTube Data") +
   labs(title = "YouTube View Outliers",
@@ -178,6 +175,14 @@ tech_merged_channels %>%
        x = "View Count",
        y = "Channel",
        caption = " ©YouTube")
+
+# To check the significant outliers:
+Outliers <-  tech_merged_channels %>%
+  group_by(channel_title) %>%
+    identify_outliers(viewCount)
+
+# Significant outliers i.e. is.extreme = TRUE
+Significant_Outliers <- Outliers[which(Outliers$is.extreme == TRUE),]
 
 # Oultiers in the data:
 # The Outlier Values:
