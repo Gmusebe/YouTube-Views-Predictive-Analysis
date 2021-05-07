@@ -176,22 +176,13 @@ tech_merged_channels %>%
        y = "Channel",
        caption = " ©YouTube")
 
-# To check the significant outliers:
+# To check outliers:
 Outliers <-  tech_merged_channels %>%
   group_by(channel_title) %>%
     identify_outliers(viewCount)
 
 # Significant outliers i.e. is.extreme = TRUE
 Significant_Outliers <- Outliers[which(Outliers$is.extreme == TRUE),]
-
-# Oultiers in the data:
-# The Outlier Values:
-Outliers <- boxplot.stats(tech_merged_channels$viewCount)$out
-Outliers_data <- tech_merged_channels[which(tech_merged_channels$viewCount %in% c(Outliers)),]
-
-# 134 outliers.
-# 130 belong to Marques Brownlee and 4 to Dave2d. This clearly shows how 	Marques Brownlee is good at his content
-# And has a wider scope of viewers.
 
 #Plotting the data with and without the Outliers comparing them with like counts
 par(mfrow=c(1, 2))
@@ -204,7 +195,7 @@ plot(tech_merged_channels$viewCount, tech_merged_channels$likeCount,
 abline(lm(likeCount ~ viewCount, data=tech_merged_channels), col="blue", lwd=3, lty=2)
 
 # Without
-Without_Outliers_data <- tech_merged_channels[-which(tech_merged_channels$viewCount %in% c(Outliers)),]
+Without_Outliers_data <- tech_merged_channels[-which(tech_merged_channels$viewCount %in% c(Outliers$viewCount)),]
 plot(Without_Outliers_data$viewCount, Without_Outliers_data$likeCount,
      main="Without Outliers",
      xlab = "View Count",
@@ -213,24 +204,13 @@ plot(Without_Outliers_data$viewCount, Without_Outliers_data$likeCount,
      col="red", cex=2)
 abline(lm(likeCount ~ viewCount, data=Without_Outliers_data), col="blue", lwd=3, lty=2)
 
-# So, why identifying the extreme values is important? Because, it can drastically 
-# bias/change the fit estimates and predictions. Let me illustrate this using the cars dataset.
-# Since we are working with real data extracted it will be a mistake to delete the ouliers knows
-# they represent true view from the specific videos.
-# We will need the data for real results. 
-ViewChange <- data.frame( Change = apply(tech_merged_channels[,c("viewCount", 'PrevViewCount')], 1,
-                                         function(x) { (x[1]-x[2])/x[2] * 100 } ))
+# Correlation:
+library(PerformanceAnalytics)
+data <- Without_Outliers_data[,c("viewCount","likeCount","dislikeCount","favoriteCount",
+                         "commentCount", "subscriberCount", "channelVideoCount",
+                         "channelViewCount")]
+PerformanceAnalytics::chart.Correlation(data, pch=19)
 
-ViewChange %>%
-  ggplot( aes(x=Change)) +
-  geom_histogram(bins = 50, fill="#0c4c8a", color="#e9ecef", alpha=0.9) +
-  ggtitle("Bin size = 3") +
-  theme_minimal() +
-  labs(title = "Percentage Difference in Views Distribution Plot",
-       x = "Percentage Diifference",
-       y = " ",
-       caption = "©YouTube") +
-  xlim(-100,400)
 
 # The view counts by day:
 tech_merged_channels %>%
@@ -253,10 +233,6 @@ tech_merged_channels %>% ggplot(aes(x = PublishedDate , y = viewCount, color = c
   xlab("Date") + ylab("View Count") +
   theme_minimal()
 
-# nsfW scoRE
-
-
-# Clickbait Score
 
 # ______________________________________________________________________________________________
 # 1. How to download playlists
