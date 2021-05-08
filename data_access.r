@@ -312,10 +312,35 @@ time <- time %>%
                                 ifelse(Time >= "120000" & Time < "170000", "Afternoon",
                                        ifelse(Time >= "170000" & Time < "200000", "Evening", "Night")))),
              # Day of Week
-             DOW = weekdays(time$Date, abbreviate = T),
-             viewCount = tech_merged_channels$viewCount)
+             DOW = weekdays(time$Date, abbreviate = F),
+             year = tech_merged_channels$PublishedYear,
+             channel_title = tech_merged_channels$channel_title
+             )
 
+# Count by Day of the week & Time of Day:
+time$DOW <- factor(time$DOW, levels= c("Sunday", "Monday", 
+                                        "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+time %>%
+  ggplot(aes(x=DOW, fill = TOD)) + geom_bar(position = "stack") +
+  coord_flip() +
+  scale_fill_brewer( palette = "YlGnBu" ) +
+  theme_minimal() + theme( legend.position = "bottom" ) +
+  labs(title = "YouTube Daily Trend",
+       subtitle = "Daily Trends by Time of Week",
+       caption = " Source: ©YouTube") +
+  xlab("") + ylab("View Count")
 
+# By DOW by Channel:
+time %>%
+  ggplot(aes(x=DOW, fill = channel_title)) + geom_bar(position = "stack") +
+  coord_flip() +
+  scale_fill_brewer( palette = "YlGnBu" ) +
+  theme_minimal() + theme( legend.position = "bottom" ) +
+  labs(title = "YouTube Daily Trend",
+       subtitle = "Daily Trends by Channel",
+       caption = " Source: ©YouTube") +
+  xlab("") + ylab("View Count")
+ 
 
 # ______________________________________________________________________________________________
 # 1. How to download playlists
