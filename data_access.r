@@ -209,7 +209,22 @@ abline(lm(likeCount ~ viewCount, data=Without_Outliers_data), col="blue", lwd=3,
 # _____________________________
 data <- Without_Outliers_data[,c("viewCount","likeCount","dislikeCount",
                          "commentCount", "subscriberCount", "channelVideoCount",
-                         "channelViewCount")]
+                         "channelViewCount", "PrevCommentCount", "PrevDislikeCount",
+                         "PrevLikeCount", "PrevViewCount")]
+
+date_date <- data.frame(Before = format(
+  as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
+  format="%m/%d/%Y"),
+  After = format(
+    as.POSIXct(as.Date(Without_Outliers_data$publication_date), format = "%m/%d/%Y %H:%M:%S"),
+    format="%m/%d/%Y"))
+
+
+# Find the number weeks in between posting videos:
+date_date$Days <- difftime(strptime(date_date$After, format = "%m/%d/%Y"),
+                  strptime(date_date$Before, format = "%m/%d/%Y"), units = "days")
+
+
 # Correlation:
 PerformanceAnalytics::chart.Correlation(data, pch=19)
 
