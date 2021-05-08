@@ -299,15 +299,22 @@ tech_merged_channels %>% ggplot(aes(x = PublishedDate , y = viewCount, color = c
   xlab("Date") + ylab("View Count") +
   theme_minimal()
 
+# Time Visualization:
 library(lubridate)
-time_data <- data.frame(Before = format(
-  as.Date(tech_merged_channels$PrevPublishedAt, format = %H:%M:%S"),
-  format="%H:%M:%S")
-  )
+time <- data.frame( Date = gsub("T", " ", tech_merged_channels$publication_date))
+time <- data.frame(Date = as.POSIXct(gsub("Z", "", time$Date), format = "%Y-%m-%d %H:%M:%S"))
 
-format(
-  as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
-  format="%m/%d/%Y")
+# Time of Day
+time <- time %>% 
+  add_column(Time = format(time$Date, format = "%H:%M:%S"),
+             # Time of Day
+             TOD = with(time, ifelse(Time > "053000" & Time < "120000", "Morning",
+                                ifelse(Time >= "120000" & Time < "170000", "Afternoon",
+                                       ifelse(Time >= "170000" & Time < "200000", "Evening", "Night")))),
+             # Day of Week
+             DOW = weekdays(time$Date, abbreviate = T),
+             viewCount = tech_merged_channels$viewCount)
+
 
 
 # ______________________________________________________________________________________________
