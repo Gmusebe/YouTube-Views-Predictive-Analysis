@@ -339,6 +339,7 @@ time %>%
   labs(title = "YouTube Daily Trend",
        subtitle = "Daily Trends by Channel",
        caption = " Source: ©YouTube") +
+  scale_y_continuous(labels = scales::percent) +
   xlab("") + ylab("View Count")
  
 
