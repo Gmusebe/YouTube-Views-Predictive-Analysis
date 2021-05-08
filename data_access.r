@@ -288,7 +288,8 @@ tech_merged_channels %>%
   theme_minimal()
 
 # There has been an increase in views with the age of the account.
-# For individual accounts:
+
+# By individual accounts:
 tech_merged_channels %>% ggplot(aes(x = PublishedDate , y = viewCount, color = channel_title)) +
   geom_line() +
   scale_color_manual(values = c("#00AFBB", "#E7B800","#FF0000")) +
@@ -297,6 +298,16 @@ tech_merged_channels %>% ggplot(aes(x = PublishedDate , y = viewCount, color = c
        caption = " Source: YouTube") +
   xlab("Date") + ylab("View Count") +
   theme_minimal()
+
+library(lubridate)
+time_data <- data.frame(Before = format(
+  as.Date(tech_merged_channels$PrevPublishedAt, format = %H:%M:%S"),
+  format="%H:%M:%S")
+  )
+
+format(
+  as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
+  format="%m/%d/%Y")
 
 
 # ______________________________________________________________________________________________
