@@ -152,8 +152,7 @@ library(rstatix)
 # View the distribution of views:
 tech_merged_channels %>%
   ggplot( aes(x=viewCount)) +
-  geom_histogram(bin = 50, fill="#0c4c8a", color="#e9ecef", alpha=0.9) +
-  ggtitle("Bin size = 3") +
+  geom_histogram(bins = 50, fill="#0c4c8a", color="#e9ecef", alpha=0.9) +
   theme_minimal() +
   labs(title = "YouTube View",
        subtitle = "YouTube Views from The marquesbrownlee, Dave2d, UltraLinx",
@@ -214,12 +213,19 @@ data <- Without_Outliers_data[,c("viewCount","likeCount","dislikeCount",
                          "channelViewCount", "PrevCommentCount", "PrevDislikeCount",
                          "PrevLikeCount", "PrevViewCount")]
 
-date_data <- data.frame(Before = format(
+date_data <- data.frame(
+  Before = format(
   as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
   format="%m/%d/%Y"),
+  
   After = format(
     as.POSIXct(as.Date(Without_Outliers_data$publication_date), format = "%m/%d/%Y %H:%M:%S"),
-    format="%m/%d/%Y"))
+    format="%m/%d/%Y"),
+  
+  Day_Difference = 
+    
+  Channel_published_date = tech_merged_channels$ChannelAge,
+  Video_published_date = tech_merged_channels$PublishedDate)
 
 
 # Find the number days in between posting videos:
