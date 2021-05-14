@@ -214,29 +214,31 @@ data <- Without_Outliers_data[,c("viewCount","likeCount","dislikeCount",
                          "PrevLikeCount", "PrevViewCount")]
 
 date_data <- data.frame(
-  Before = format(
-  as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
-  format="%m/%d/%Y"),
-  
-  After = format(
+  # Find the number days in between posting videos:
+  Days = as.numeric(difftime(strptime(format(
     as.POSIXct(as.Date(Without_Outliers_data$publication_date), format = "%m/%d/%Y %H:%M:%S"),
-    format="%m/%d/%Y"),
+    format="%m/%d/%Y"), format = "%m/%d/%Y"),strptime(format(
+      as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
+      format="%m/%d/%Y"), format = "%m/%d/%Y"), units = "days")),
   
-  Day_Difference = 
-    
-  Channel_published_date = tech_merged_channels$ChannelAge,
-  Video_published_date = tech_merged_channels$PublishedDate)
+  # Month of publication:
+  Video_Month_Published = months(as.Date(Without_Outliers_data$publication_date), abbreviate = TRUE),
+  
+  # Find the number of hours in between posting videos:
+  Hours_published = as.numeric(difftime(strptime(format(
+    as.POSIXct(as.Date(Without_Outliers_data$publication_date), format = "%m/%d/%Y %H:%M:%S"),
+    format="%m/%d/%Y"), format = "%m/%d/%Y"),strptime(format(
+      as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
+      format="%m/%d/%Y"), format = "%m/%d/%Y"), units = "hours")),
+  
+  # Age of Channel to Video publication:
+  Age_Channel = Without_Outliers_data$PublishedYear - Without_Outliers_data$ChannelAge)
 
 
-# Find the number days in between posting videos:
-data$Days <- as.numeric(difftime(strptime(date_date$After, format = "%m/%d/%Y"),
-                  strptime(date_date$Before, format = "%m/%d/%Y"), units = "days"))
-
-# Channel Age in Years:
-data$ChannelAge <- Without_Outliers_data$PublishedYear - Without_Outliers_data$ChannelAge
+data <- add_column(data, date_data, .after = 11)
 
 # Correlation heatmap
-cormat <- round(cor(data), 2)
+cormat <- round(cor(data[,-13]), 2)
 
 get_upper_tri <- function(cormat){
   cormat[lower.tri(cormat)]<- NA
@@ -244,6 +246,7 @@ get_upper_tri <- function(cormat){
 }
 
 upper_tri <- get_upper_tri(cormat)
+
 reorder_cormat <- function(cormat){
   # Use correlation between variables as distance
   dd <- as.dist((1-cormat)/2)
@@ -281,7 +284,7 @@ ggheatmap +
                                title.position = "top", title.hjust = 0.5))
 
 # For Correlation significance:
-PerformanceAnalytics::chart.Correlation(data, pch=19)
+PerformanceAnalytics::chart.Correlation(data[,-13], pch=19)
 
 # The view counts by day:
 tech_merged_channels %>%
