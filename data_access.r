@@ -361,8 +361,19 @@ time %>%
 # R2_score 0.847
 
 # Training cost = 0.000033
- 
 
+# Install and load the random forest package:
+install.packages("randomForest")
+library(randomForest)
+
+# Create the random forest regressor:
+YouTube.rf <- randomForest(viewCount ~ ., data = data, mtry = 10,
+                         importance = TRUE, na.action = na.omit)
+
+print(YouTube.rf)
+
+# Plot Model:
+plot(YouTube.rf)
 # ______________________________________________________________________________________________
 # 1. How to download playlists
 # _____________________________
