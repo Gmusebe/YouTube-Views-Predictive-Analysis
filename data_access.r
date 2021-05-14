@@ -349,6 +349,18 @@ time %>%
        subtitle = "Daily Trends by Channel",
        caption = " Source: ©YouTube") +
   xlab("") + ylab("View Count")
+
+
+# RandomForestRegressor
+# Regression
+# scikit learn
+# Number of trees = 10
+# Max_Depth: null
+
+# MSE 366735293182.2594
+# R2_score 0.847
+
+# Training cost = 0.000033
  
 
 # ______________________________________________________________________________________________
