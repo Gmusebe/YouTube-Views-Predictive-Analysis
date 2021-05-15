@@ -2,6 +2,7 @@
 
 # Setting the environment
 # Explain the tuber package in depth
+library(broom)
 library(dplyr)
 library(tibble)
 library(tuber)
@@ -463,7 +464,7 @@ lines(YouTube.rf2, col="blue")
 # Larger grid search
 ## hyperparameter grid search:
 hyper_grid <- expand.grid(
-  mtry       = seq(2, 12, by = 2),
+  mtry       = seq(2, 9, by = 2),
   node_size  = seq(3, 9, by = 2),
   sampe_size = c(.55, .632, .70, .80),
   OOB_RMSE   = 0
@@ -489,3 +490,35 @@ for(i in 1:nrow(hyper_grid)) {
 hyper_grid %>% 
   dplyr::arrange(OOB_RMSE) %>%
   head(10)
+
+# Best model mtry = 6, nodes = 5 and sample of 70%
+# Lets repeat this model to get a better expectation of our error rate:
+OOB_RMSE <- vector(mode = "numeric", length = 100)
+
+for(i in seq_along(OOB_RMSE)) {
+  
+  optimal_ranger <- ranger(
+    formula         = viewCount ~ ., 
+    data            = youtube_train, 
+    num.trees       = 500,
+    mtry            = 6,
+    min.node.size   = 5,
+    sample.fraction = .7,
+    importance      = 'impurity'
+  )
+  
+  OOB_RMSE[i] <- sqrt(optimal_ranger$prediction.error)
+}
+
+hist(OOB_RMSE, breaks = 20)
+# Variable importance:
+
+optimal_ranger$variable.importance %>% 
+  broom::tidy() %>%
+  dplyr::arrange(desc(x)) %>%
+  dplyr::top_n(7) %>%
+  ggplot(aes(reorder(names, x), x)) +
+  geom_col() +
+  coord_flip() +theme_bw() +
+  ggtitle("Top 5 important variables")
+
