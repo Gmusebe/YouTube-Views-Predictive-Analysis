@@ -360,22 +360,29 @@ time %>%
 # Training cost = 0.000033
 
 # Install and load the random forest package:
-install.packages(c("randomForest", "rsample", "ranger", "h20", "caret"))
+install.packages(c("randomForest", "rsample", "ranger", "h2o", "caret"))
 
 # Create training (70%) and test (30%) sets for the YouTube data:
 # Use set.seed for reproducibility
 library(randomForest)
 library(resample)
 library(ranger)
-library(caret)
+library(caret) #***
+library(h2o)
+
 set.seed(123)
-youtibe_split <- 
+youtube_split <- createDataPartition(data$viewCount, p = .7,
+                                     list = FALSE,
+                                     times = 1)
+youtube_train <- data[youtube_split,]
+youtube_test <- data[youtube_split,]
 
-# Create the random forest regressor:
-YouTube.rf <- randomForest(viewCount ~ ., data = data, mtry = 10,
-                         importance = TRUE, na.action = na.omit)
+# Default RF model:
+YouTube.rf1 <- randomForest(
+  formula = viewCount ~ .,
+  data = youtube_train)
 
-print(YouTube.rf)
+YouTube.rf
 
 # Plot Model:
 plot(YouTube.rf)
