@@ -463,7 +463,7 @@ lines(YouTube.rf2, col="blue")
 # Larger grid search
 ## hyperparameter grid search:
 hyper_grid <- expand.grid(
-  mtry       = seq(20, 30, by = 2),
+  mtry       = seq(2, 12, by = 2),
   node_size  = seq(3, 9, by = 2),
   sampe_size = c(.55, .632, .70, .80),
   OOB_RMSE   = 0
@@ -485,3 +485,7 @@ for(i in 1:nrow(hyper_grid)) {
   # add OOB error to grid
   hyper_grid$OOB_RMSE[i] <- sqrt(model$prediction.error)
 }
+
+hyper_grid %>% 
+  dplyr::arrange(OOB_RMSE) %>%
+  head(10)
