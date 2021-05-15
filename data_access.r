@@ -367,7 +367,7 @@ install.packages(c("randomForest", "rsample", "ranger", "h2o", "caret"))
 # Use set.seed for reproducibility
 library(randomForest)
 library(rsample) #***
-library(ranger)
+library(ranger) #***
 library(caret) #***
 library(h2o)
 
@@ -435,5 +435,53 @@ tibble::tibble(
   gather(Metric, RMSE, -ntrees) %>%
   ggplot(aes(ntrees, RMSE, color = Metric)) +
   geom_line() +
-  scale_y_continuous(labels = scales::dollar) +
+  scale_y_continuous(breaks=c(530000,580000, 600000, 700000)) +
   xlab("Number of trees")
+
+# Tuning
+# names of features
+features <- setdiff(names(youtube_train), "viewCount")
+
+set.seed(123)
+
+YouTube.rf2 <- tuneRF(
+  x          = youtube_train[features],
+  y          = youtube_train$viewCount,
+  ntreeTry   = 500,
+  mtryStart  = 5,
+  stepFactor = 1.5,
+  improve    = 0.01,
+  trace      = FALSE      # to not show real-time progress 
+)
+
+# -0.02509524 0.01 
+# -0.005616687 0.01
+
+plot(YouTube.rf2)
+lines(YouTube.rf2, col="blue")
+
+# Larger grid search
+## hyperparameter grid search:
+hyper_grid <- expand.grid(
+  mtry       = seq(20, 30, by = 2),
+  node_size  = seq(3, 9, by = 2),
+  sampe_size = c(.55, .632, .70, .80),
+  OOB_RMSE   = 0
+)
+
+for(i in 1:nrow(hyper_grid)) {
+  
+  # train model
+  model <- ranger(
+    formula         = viewCount ~ ., 
+    data            = youtube_train, 
+    num.trees       = 500,
+    mtry            = hyper_grid$mtry[i],
+    min.node.size   = hyper_grid$node_size[i],
+    sample.fraction = hyper_grid$sampe_size[i],
+    seed            = 123
+  )
+  
+  # add OOB error to grid
+  hyper_grid$OOB_RMSE[i] <- sqrt(model$prediction.error)
+}
