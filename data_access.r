@@ -221,9 +221,6 @@ date_data <- data.frame(
       as.POSIXct(as.Date(Without_Outliers_data$PrevPublishedAt), format = "%m/%d/%Y %H:%M:%S"),
       format="%m/%d/%Y"), format = "%m/%d/%Y"), units = "days")),
   
-  # Month of publication:
-  Video_Month_Published = months(as.Date(Without_Outliers_data$publication_date), abbreviate = TRUE),
-  
   # Find the number of hours in between posting videos:
   Hours_published = as.numeric(difftime(strptime(format(
     as.POSIXct(as.Date(Without_Outliers_data$publication_date), format = "%m/%d/%Y %H:%M:%S"),
@@ -238,7 +235,7 @@ date_data <- data.frame(
 data <- add_column(data, date_data, .after = 11)
 
 # Correlation heatmap
-cormat <- round(cor(data[,-13]), 2)
+cormat <- round(cor(data), 2)
 
 get_upper_tri <- function(cormat){
   cormat[lower.tri(cormat)]<- NA
@@ -284,7 +281,7 @@ ggheatmap +
                                title.position = "top", title.hjust = 0.5))
 
 # For Correlation significance:
-PerformanceAnalytics::chart.Correlation(data[,-13], pch=19)
+PerformanceAnalytics::chart.Correlation(data, pch=19)
 
 # The view counts by day:
 tech_merged_channels %>%
@@ -363,8 +360,16 @@ time %>%
 # Training cost = 0.000033
 
 # Install and load the random forest package:
-install.packages("randomForest")
+install.packages(c("randomForest", "rsample", "ranger", "h20", "caret"))
+
+# Create training (70%) and test (30%) sets for the YouTube data:
+# Use set.seed for reproducibility
 library(randomForest)
+library(resample)
+library(ranger)
+library(caret)
+set.seed(123)
+youtibe_split <- 
 
 # Create the random forest regressor:
 YouTube.rf <- randomForest(viewCount ~ ., data = data, mtry = 10,
@@ -374,60 +379,3 @@ print(YouTube.rf)
 
 # Plot Model:
 plot(YouTube.rf)
-# ______________________________________________________________________________________________
-# 1. How to download playlists
-# _____________________________
-# Let us download the playlist data for Data Science Full Course For Beginners | Python Data Science Tutorial | Data Science With Python
-# from the codebasics
-
-codebasics_datascience_playlist <- stringr::str_split(
-  string = "https://www.youtube.com/playlist?list=PLeo1K3hjS3us_ELKYSj_Fth2tIEkdKXvV", 
-  pattern = "=", 
-  n = 2,
-  simplify = TRUE)[ , 2]
-codebasics_datascience_playlist
-
-
-
-# Returns the playlist ID
-# [1] "PLeo1K3hjS3us_ELKYSj_Fth2tIEkdKXvV"
-
-# now we can use the tuber::get_playlist_items() with the playlist ID to collect the videos into a data.frame.
-codeBasicsDS <- tuber::get_playlist_items(filter = 
-                                            c(playlist_id = "PLeo1K3hjS3us_ELKYSj_Fth2tIEkdKXvV"), 
-                                          part = "contentDetails",
-                                          # set this to the number of videos
-                                          max_results = 200)
-
-# This returns all the videos in the playlist.
-# Check that only one video is each row. Knowing that the playslist has 111 videos we expect 111 rows.
-# Check unique data:
-# We should check these data to see if there is one row per video from the playlist
-# # check the data for Data Science
-codeBasicsDS %>% dplyr::glimpse(78)
-
-# Collecting statistics from a YouTube playlist
-# Get ID's of the videos:
-codeBasicsDS_id <- base::as.vector(codeBasicsDS$contentDetails.videoId)
-
-# View the IDs
-dplyr::glimpse(codeBasicsDS_id) # Returns the first eight video ID. 
-video_ID <- data.frame(codeBasicsDS_id)
-
-# a function that extracts the statistics for each video on the playlist
-# Function to scrape stats for all vids
-videostats = lapply(as.character(video_ID$codeBasicsDS_id), function(x){
-  get_stats(video_id = x)
-})
-videostats = do.call(rbind.data.frame, videostats)
-
-codeBasicsDS_stats_data <- merge(codeBasicsDS, videostats, by.x = "contentDetails.videoId", 
-                                 by.y = "id", all = TRUE)
-
-
-
-# To search for videos with a phrase e.g aws:
-aws_yt_videos <- yt_search("aws")
-
-# find channels from which videos of playlist are from:
-# Mixed Playlist url: https://www.youtube.com/watch?v=mC-zw0zCCtg&list=PLIVbZhwLbExKoDlYntZV_Y1c3bZYz7hAs
