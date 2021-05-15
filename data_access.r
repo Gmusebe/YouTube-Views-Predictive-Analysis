@@ -3,6 +3,7 @@
 # Setting the environment
 # Explain the tuber package in depth
 library(dplyr)
+library(tibble)
 library(tuber)
 library(naniar)
 library(ggplot2)
@@ -365,7 +366,7 @@ install.packages(c("randomForest", "rsample", "ranger", "h2o", "caret"))
 # Create training (70%) and test (30%) sets for the YouTube data:
 # Use set.seed for reproducibility
 library(randomForest)
-library(resample)
+library(rsample) #***
 library(ranger)
 library(caret) #***
 library(h2o)
@@ -375,14 +376,64 @@ youtube_split <- createDataPartition(data$viewCount, p = .7,
                                      list = FALSE,
                                      times = 1)
 youtube_train <- data[youtube_split,]
-youtube_test <- data[youtube_split,]
+youtube_test <- data[-youtube_split,]
 
 # Default RF model:
 YouTube.rf1 <- randomForest(
   formula = viewCount ~ .,
   data = youtube_train)
 
-YouTube.rf
+YouTube.rf1
 
 # Plot Model:
-plot(YouTube.rf)
+plot(YouTube.rf1)
+
+# Mean Squared Error
+YouTube.rf1$mse
+
+# number of trees with lowest MSE
+which.min(YouTube.rf1$mse)
+# 231
+
+# RMSE of this optimal random forest
+sqrt(YouTube.rf1$mse[which.min(YouTube.rf1$mse)])
+# 531857 
+
+
+# Validation:
+# create training and validation data 
+set.seed(123)
+valid_youtube_index <- rsample::initial_split(youtube_train, .8)
+
+# training data
+valid_youtube_train <- analysis(valid_youtube_index)
+
+# validation data
+youtube_valid <- assessment(valid_youtube_index)
+
+# Supply the validation data in the xtest and ytest arguments:
+x_test <- youtube_valid[setdiff(names(youtube_valid), "viewCount")]
+y_test <- youtube_valid$viewCount
+
+rf_oob_comp <- randomForest(
+  formula = viewCount ~ .,
+  data    = valid_youtube_train,
+  xtest   = x_test,
+  ytest   = y_test
+)
+
+# extract OOB & validation errors
+oob <- sqrt(rf_oob_comp$mse)
+validation <- sqrt(rf_oob_comp$test$mse)
+
+# compare error rates:
+tibble::tibble(
+  `Out of Bag Error` = oob,
+  `Test error` = validation,
+  ntrees = 1:rf_oob_comp$ntree
+) %>%
+  gather(Metric, RMSE, -ntrees) %>%
+  ggplot(aes(ntrees, RMSE, color = Metric)) +
+  geom_line() +
+  scale_y_continuous(labels = scales::dollar) +
+  xlab("Number of trees")
