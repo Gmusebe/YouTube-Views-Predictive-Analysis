@@ -350,34 +350,25 @@ time %>%
   xlab("") + ylab("View Count")
 
 
-# RandomForestRegressor
-# Regression
-# scikit learn
-# Number of trees = 10
-# Max_Depth: null
-
-# MSE 366735293182.2594
-# R2_score 0.847
-
-# Training cost = 0.000033
-
+# Model:
 # Install and load the random forest package:
-install.packages(c("randomForest", "rsample", "ranger", "h2o", "caret"))
+install.packages(c("randomForest", "rsample", "ranger","caret"))
+
+# Load data:
+library(randomForest)
+library(rsample)
+library(ranger)
+library(caret)
 
 # Create training (70%) and test (30%) sets for the YouTube data:
 # Use set.seed for reproducibility
-library(randomForest)
-library(rsample) #***
-library(ranger) #***
-library(caret) #***
-library(h2o)
-
 set.seed(123)
 youtube_split <- initial_split(data, prop = .7)
 youtube_train <- training(youtube_split)
 youtube_test <- testing(youtube_split)
 
 # Default RF model:
+set.seed(123)
 YouTube.rf1 <- randomForest(
   formula = viewCount ~ .,
   data = youtube_train)
@@ -392,11 +383,11 @@ YouTube.rf1$mse
 
 # number of trees with lowest MSE
 which.min(YouTube.rf1$mse)
-# 231
+# 475
 
 # RMSE of this optimal random forest
 sqrt(YouTube.rf1$mse[which.min(YouTube.rf1$mse)])
-# 531857 
+# 523149.6
 
 
 # Validation:
@@ -434,7 +425,7 @@ tibble::tibble(
   gather(Metric, RMSE, -ntrees) %>%
   ggplot(aes(ntrees, RMSE, color = Metric)) +
   geom_line() +
-  scale_y_continuous(breaks=c(530000,580000, 600000, 700000)) +
+  scale_y_continuous(breaks=c(523000,580000, 600000, 700000)) +
   xlab("Number of trees")
 
 # Tuning
@@ -489,7 +480,7 @@ hyper_grid %>%
   dplyr::arrange(OOB_RMSE) %>%
   head(10)
 
-# Best model mtry = 6, nodes = 5 and sample of 70%
+# Best model mtry = 8, nodes = 5 and sample of 80%
 # Lets repeat this model to get a better expectation of our error rate:
 OOB_RMSE <- vector(mode = "numeric", length = 100)
 
@@ -499,9 +490,9 @@ for(i in seq_along(OOB_RMSE)) {
     formula         = viewCount ~ ., 
     data            = youtube_train, 
     num.trees       = 500,
-    mtry            = 6,
+    mtry            = 8,
     min.node.size   = 5,
-    sample.fraction = .7,
+    sample.fraction = .8,
     importance      = 'impurity'
   )
   
@@ -509,8 +500,8 @@ for(i in seq_along(OOB_RMSE)) {
 }
 
 hist(OOB_RMSE, breaks = 20)
-# Variable importance:
 
+# Variable importance:
 optimal_ranger$variable.importance %>% 
   broom::tidy() %>%
   dplyr::arrange(desc(x)) %>%
@@ -521,22 +512,15 @@ optimal_ranger$variable.importance %>%
   ggtitle("Top 5 important variables")
 
 # Predicting:
-  ames_ranger <- ranger(
-    formula   = viewCount ~ ., 
-    data      = youtube_train, 
-    num.trees = 500,
-    mtry      = 4)
-
-# In Random Forest
-model_rf  <- randomForest(viewCount ~ ., data = youtube_train, method = 
-                              "rf", importance = TRUE, mtry = 4, ntree = 500)  
-
-
-varImpPlot(model_rf)
-
+ames_ranger <- ranger(formula   = viewCount ~ ., 
+                      data      = youtube_train,
+                      num.trees = 500,
+                      min.node.size = 5,
+                      sample.fraction = 0.8,
+                      mtry = 8)
 
 # Predicting:
-prediction <- predict(model_rf,youtube_test, type='response')
+prediction <- predict(ames_ranger, youtube_test,type='response')
 mean(table(prediction, youtube_test))
 
 
