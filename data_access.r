@@ -444,12 +444,6 @@ YouTube.rf2 <- tuneRF(
   trace      = FALSE      # to not show real-time progress 
 )
 
-# -0.02509524 0.01 
-# -0.005616687 0.01
-
-plot(YouTube.rf2)
-lines(YouTube.rf2, col="blue")
-
 # Larger grid search
 ## hyperparameter grid search:
 hyper_grid <- expand.grid(
@@ -509,7 +503,7 @@ optimal_ranger$variable.importance %>%
   ggplot(aes(reorder(names, x), x)) +
   geom_col() +
   coord_flip() +theme_bw() +
-  ggtitle("Top 5 important variables")
+  ggtitle("Top 7 important variables")
 
 # Predicting:
 ames_ranger <- ranger(formula   = viewCount ~ ., 
