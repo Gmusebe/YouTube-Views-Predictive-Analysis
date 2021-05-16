@@ -373,11 +373,9 @@ library(caret) #***
 library(h2o)
 
 set.seed(123)
-youtube_split <- createDataPartition(data$viewCount, p = .7,
-                                     list = FALSE,
-                                     times = 1)
-youtube_train <- data[youtube_split,]
-youtube_test <- data[-youtube_split,]
+youtube_split <- initial_split(data, prop = .7)
+youtube_train <- training(youtube_split)
+youtube_test <- testing(youtube_split)
 
 # Default RF model:
 YouTube.rf1 <- randomForest(
@@ -522,3 +520,35 @@ optimal_ranger$variable.importance %>%
   coord_flip() +theme_bw() +
   ggtitle("Top 5 important variables")
 
+# Predicting:
+  ames_ranger <- ranger(
+    formula   = viewCount ~ ., 
+    data      = youtube_train, 
+    num.trees = 500,
+    mtry      = 4)
+
+# In Random Forest
+model_rf  <- randomForest(viewCount ~ ., data = youtube_train, method = 
+                              "rf", importance = TRUE, mtry = 4, ntree = 500)  
+
+
+varImpPlot(model_rf)
+
+
+# Predicting:
+prediction <- predict(model_rf,youtube_test, type='response')
+mean(table(prediction, youtube_test))
+
+
+
+
+
+
+
+
+
+
+pred_randF <- predict(rf, newdata = youtube_test[-1])
+
+
+# For the model accuracy using the caret package:
