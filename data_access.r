@@ -2,18 +2,18 @@
 
 # Setting the environment
 # Explain the tuber package in depth
-library(broom)
 library(dplyr)
-library(tibble)
 library(tuber)
+library(ggpubr)
+library(tibble)
 library(naniar)
 library(ggplot2)
+library(rstatix)
 library(magrittr)
 library(reshape2)
 library(corrplot)
 library(ggthemes)
 library(tidyverse)
-library(PerformanceAnalytics)
 
 # After obtaining tokens, save them into two objects(client_id and client_secret).
 
@@ -92,9 +92,6 @@ marquesbrownlee_video_stats <- marquesbrownlee_video_stats %>%
 # Merge the three data sets to have the data we will use to predicts the number of views
 tech_merged_channels <- merge(marquesbrownlee_video_stats, UltraLinx_video_stats, dave2D, all = TRUE)
 
-library(readxl)
-tech_merged_channels <- read_excel("merged_video_stats.xlsx")
-
 # Data Structure:
 str(tech_merged_channels)
 
@@ -146,9 +143,6 @@ tech_merged_channels <- tech_merged_channels[complete.cases(tech_merged_channels
 # You can confirm this by running the line 249
 
 # Visualization:
-# Significant Outliers in Views:
-library(ggpubr)
-library(rstatix)
 
 # Data Exploration:
 # View the distribution of views:
@@ -355,10 +349,12 @@ time %>%
 install.packages(c("randomForest", "rsample", "ranger","caret"))
 
 # Load data:
+library(PerformanceAnalytics)
 library(randomForest)
 library(rsample)
 library(ranger)
 library(caret)
+library(broom)
 
 # Create training (70%) and test (30%) sets for the YouTube data:
 # Use set.seed for reproducibility
@@ -506,27 +502,23 @@ optimal_ranger$variable.importance %>%
   ggtitle("Top 7 important variables")
 
 # Predicting:
-ames_ranger <- ranger(formula   = viewCount ~ ., 
-                      data      = youtube_train,
-                      num.trees = 500,
-                      min.node.size = 5,
-                      sample.fraction = 0.8,
-                      mtry = 8)
+# Our model will be the optimal ranger:
+optimal_ranger <- ranger(
+  formula         = viewCount ~ ., 
+  data            = youtube_train, 
+  num.trees       = 500,
+  mtry            = 8,
+  min.node.size   = 5,
+  sample.fraction = .8,
+  importance      = 'impurity'
+)
 
-# Predicting:
-prediction <- predict(ames_ranger, youtube_test,type='response')
-mean(table(prediction, youtube_test))
+# Having values of colnames(data[,-1]) one can predict the view expected.
+# For our testing data:
 
+pred_youtube_views <- predict(optimal_ranger, youtube_test)
 
+#Predictions:
+pred_youtube_views$predictions
 
-
-
-
-
-
-
-
-pred_randF <- predict(rf, newdata = youtube_test[-1])
-
-
-# For the model accuracy using the caret package:
+# End
