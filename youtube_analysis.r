@@ -17,8 +17,8 @@ library(tidyverse)
 
 # After obtaining tokens, save them into two objects(client_id and client_secret).
 
-client_id <- "201724301171-sina4isjr04n6f93a9mbcsjqrd3pgbmr.apps.googleusercontent.com"
-client_secret <- "z0Czo17ooY-CDlqSsUh6D4jx"
+client_id <- "xxxx"
+client_secret <- "xxxx"
 
 # Now you can run tuber’s yt_oauth() function to authenticate your application. 
 yt_oauth(app_id = client_id,
